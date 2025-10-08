@@ -5,9 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Cookies from "js-cookie";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import RevalidatePath from "@/actions";
 
 export function LoginForm({
   className,
@@ -15,10 +14,13 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
   const LoginHandler = async () => {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}auth/login`,
-      {
+    try {
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+      const url = baseUrl ? `${baseUrl}/auth/login` : "/api/auth/login";
+
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -27,15 +29,29 @@ export function LoginForm({
           email: email,
           password: password,
         }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(errorText || `Login request failed (${response.status})`);
       }
-    );
-    const result = await response.json();
-    if (result.success) {
-      const accessToken = result.token;
-      Cookies.set("accessToken", accessToken, { expires: 7 });
-      RevalidatePath("/");
-      // redirect to home page
-      redirect("/");
+
+      const result = await response.json();
+      if (result?.success) {
+        const accessToken = result.token;
+        if (accessToken) {
+          Cookies.set("accessToken", accessToken, { expires: 7 });
+        }
+        router.refresh();
+        router.push("/");
+        return;
+      }
+
+      throw new Error(result?.message || "Invalid login response");
+    } catch (err) {
+      // Surface a concise error in dev tools; UI can be enhanced to show a toast.
+      console.error("Login failed:", err);
+      alert("Login failed. Please check your credentials and try again.");
     }
   };
 

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import RevalidatePath from "@/actions";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowDownRight, ArrowUpRight, Tag } from "lucide-react";
 
 interface Transaction {
   id: string | number;
@@ -158,42 +160,49 @@ export default function RecentTransactions() {
 
   return (
     <div className="p-6">
-    
+
           {loading && <p className="text-gray-500">Loading transactions...</p>}
           {error && <p className="text-red-500">{error}</p>}
 
           {!loading && !error && transactions.length > 0 && (
-            <>
-              <div className="grid grid-cols-5 gap-4 text-gray-600 font-semibold border-b pb-2">
-                <p>Title</p>
-                <p>Type</p>
-                <p>Date</p>
-                <p>Amount</p>
-                <p>Actions</p>
-              </div>
-
-              {transactions?.map((t, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-5 gap-4 py-2 border-b last:border-0 text-sm"
-                >
-                  <p>{t.title}</p>
-                  <p className={t.type === "income" ? "text-green-600 capitalize" : "text-red-600 capitalize"}>{t.type}</p>
-                  <p>{moment(t.created_at).format("DD/MM/YYYY hh:mm A")}</p>
-                  <p
-                    className={
-                      t.type === "income" ? "text-green-600" : "text-red-600"
-                    }
-                  >
-                    {t.amount.toFixed(2)}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onEdit(t)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => onDelete(t)}>Delete</Button>
-                  </div>
-                </div>
-              ))}
-            </>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {transactions?.map((t, index) => (
+                  <TableRow key={index} className="hover:bg-muted/40">
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${t.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {t.type === "income" ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                        </span>
+                        <span className="truncate">{t.title}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${t.type === "income" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                        <Tag size={12} /> {t.type}
+                      </span>
+                    </TableCell>
+                    <TableCell>{moment(t.created_at).format("DD/MM/YYYY hh:mm A")}</TableCell>
+                    <TableCell className={t.type === "income" ? "text-green-600 text-right" : "text-red-600 text-right"}>{t.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button size="sm" variant="outline" onClick={() => onEdit(t)}>Edit</Button>
+                        <Button size="sm" variant="destructive" onClick={() => onDelete(t)}>Delete</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
 
           {!loading && !error && transactions.length === 0 && (
